@@ -161,11 +161,12 @@ class ContainerCreation(ContainerSelector, ImageSelector):
                                        default=True,
                                        dest="exegol_resources",
                                        help=f"Disable the mount of the exegol resources (/opt/resources) from the host ({UserConfig().exegol_resources_path}) (default: [green]Enabled[/green])")
-        self.host_network = Option("--disable-shared-network",
-                                   action="store_false",
-                                   default=True,
-                                   dest="host_network",
-                                   help="Disable the sharing of the host's network interfaces with exegol (default: [green]Enabled[/green])")
+        self.network = Option("--network",
+                              dest="network",
+                              action="store",
+                              default="host",
+                              choices={"host", "nat", "disable"},  # TODO add dedicated network option
+                              help="Select the type of network to which the container will be attached (default: [blue]host[/blue])")
         self.share_timezone = Option("--disable-shared-timezones",
                                      action="store_false",
                                      default=True,
@@ -243,7 +244,7 @@ class ContainerCreation(ContainerSelector, ImageSelector):
                                   {"arg": self.X11, "required": False},
                                   {"arg": self.my_resources, "required": False},
                                   {"arg": self.exegol_resources, "required": False},
-                                  {"arg": self.host_network, "required": False},
+                                  {"arg": self.network, "required": False},
                                   {"arg": self.share_timezone, "required": False},
                                   {"arg": self.comment, "required": False},
                                   title="[blue]Container creation options[/blue]"))

@@ -450,7 +450,7 @@ class ExegolManager:
             config.enableGUI()
         if ParametersManager().share_timezone:
             config.enableSharedTimezone()
-        config.setNetworkMode(ParametersManager().host_network)
+        config.setNetworkMode(ParametersManager().network)
         if ParametersManager().ports is not None:
             for port in ParametersManager().ports:
                 config.addRawPort(port)
