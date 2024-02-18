@@ -22,6 +22,7 @@ class ExegolContainerTemplate:
         self.name: str = name.replace('exegol-', '')
         self.image: ExegolImage = image
         self.config: ContainerConfig = config
+        self.config.updateContainerName(self.container_name)
         if hostname:
             self.config.hostname = hostname
             if new_container:

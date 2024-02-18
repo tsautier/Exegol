@@ -118,7 +118,6 @@ class DockerUtils:
                        "devices": model.config.getDevices(),
                        "environment": model.config.getEnvs(),
                        "labels": model.config.getLabels(),
-                       "network_mode": model.config.getNetworkMode(),
                        "ports": model.config.getPorts(),
                        "privileged": model.config.getPrivileged(),
                        "cap_add": model.config.getCapabilities(),
@@ -128,11 +127,19 @@ class DockerUtils:
                        "tty": model.config.tty,
                        "mounts": model.config.getVolumes(),
                        "working_dir": model.config.getWorkingDir()}
+        # Add networking args
+        if model.config.isNetworkDisabled():
+            docker_args["network_disabled"] = True
+        else:
+            docker_args["network"], docker_args["network_driver_opt"] = model.config.getNetwork()
+        # Handle temporary arguments
         if temporary:
             # Only the 'run' function support the "remove" parameter
             docker_create_function = cls.__client.containers.run
             docker_args["remove"] = temporary
             docker_args["auto_remove"] = temporary
+
+        # Create container
         try:
             container = docker_create_function(**docker_args)
         except APIError as err:

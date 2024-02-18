@@ -165,7 +165,7 @@ class ContainerCreation(ContainerSelector, ImageSelector):
                               dest="network",
                               action="store",
                               default="host",
-                              choices={"host", "nat", "disable"},  # TODO add dedicated network option
+                              choices={"host", "nat", "disable", "docker"},  # TODO add dedicated network option
                               help="Select the type of network to which the container will be attached (default: [blue]host[/blue])")
         self.share_timezone = Option("--disable-shared-timezones",
                                      action="store_false",
