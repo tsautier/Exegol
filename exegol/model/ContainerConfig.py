@@ -21,8 +21,8 @@ from exegol.console.ConsoleFormat import boolFormatter, getColor
 from exegol.console.ExegolPrompt import Confirm
 from exegol.console.cli.ParametersManager import ParametersManager
 from exegol.exceptions.ExegolExceptions import ProtocolNotSupported, CancelOperation
-from exegol.model.ExegolNetwork import ExegolNetwork, ExegolNetworkMode
 from exegol.model.ExegolModules import ExegolModules
+from exegol.model.ExegolNetwork import ExegolNetwork, ExegolNetworkMode
 from exegol.utils import FsUtils
 from exegol.utils.ExeLog import logger, ExeLog
 from exegol.utils.GuiUtils import GuiUtils
@@ -77,10 +77,16 @@ class ContainerConfig:
                         ExegolMetadata.comment.value: ["setComment", "getComment"],
                         ExegolMetadata.password.value: ["setPasswd", "getPasswd"]}
 
-    def __init__(self, container: Optional[Container] = None):
+    def __init__(self, container: Optional[Container] = None, container_name: Optional[str] = None, hostname: Optional[str] = None):
         """Container config default value"""
-        self.hostname = ""
-        self.__container_full_name: Optional[str] = None
+        self.container_name: Optional[str] = container_name if (container_name is None) ^ \
+                                                               (container_name is not None and container_name.startswith("exegol-")) else f'exegol-{container_name}'
+        if hostname is not None:
+            self.hostname = hostname
+            if container is None:  # if this is a new container
+                self.addEnv(ContainerConfig.ExegolEnv.exegol_name.value, container_name)
+        else:
+            self.hostname = self.container_name if self.container_name is not None else ""
         self.__enable_gui: bool = False
         self.__share_timezone: bool = False
         self.__my_resources: bool = False
@@ -125,6 +131,7 @@ class ContainerConfig:
         else:
             self.__wrapper_start_enabled = True
             self.addVolume(str(ConstantConfig.spawn_context_path_obj), "/.exegol/spawn.sh", read_only=True, must_exist=True)
+            self.__prepareContainerConfig()
 
     # ===== Config parsing section =====
 
@@ -133,8 +140,9 @@ class ContainerConfig:
         # Reset default attributes
         self.__passwd = None
         # Container Config section
-        self.__container_full_name = container.name
+        self.container_name = container.name
         container_config = container.attrs.get("Config", {})
+        self.hostname = container_config.get('Hostname', self.container_name)
         self.tty = container_config.get("Tty", True)
         self.__parseEnvs(container_config.get("Env", []))
         self.__parseLabels(container_config.get("Labels", {}))
@@ -168,7 +176,7 @@ class ContainerConfig:
 
         # Network section
         network_settings = container.attrs.get("NetworkSettings", {})
-        self.__networks = ExegolNetwork.parse_networks(network_settings["Networks"], container_name=self.__container_full_name)
+        self.__networks = ExegolNetwork.parse_networks(network_settings["Networks"], container_name=self.container_name)
         self.__ports = network_settings.get("Ports", {})
 
     def __parseEnvs(self, envs: List[str]):
@@ -255,11 +263,52 @@ class ContainerConfig:
             elif "/.exegol/spawn.sh" in share.get('Destination', ''):
                 self.__wrapper_start_enabled = True
 
-    def updateContainerName(self, name: str):
-        """Update container full name if not already set"""
-        if self.__container_full_name is not None:
-            return
-        self.__container_full_name = name
+    # ===== Config init section =====
+
+    def __prepareContainerConfig(self):
+        """Create Exegol configuration from user input"""
+        # Container configuration from user CLI options
+        if ParametersManager().X11:
+            self.enableGUI()
+        if ParametersManager().share_timezone:
+            self.enableSharedTimezone()
+        self.setNetworkMode(ParametersManager().network)
+        if ParametersManager().ports is not None:
+            for port in ParametersManager().ports:
+                self.addRawPort(port)
+        if ParametersManager().my_resources:
+            self.enableMyResources()
+        if ParametersManager().exegol_resources:
+            self.enableExegolResources()
+        if ParametersManager().log:
+            self.enableShellLogging(ParametersManager().log_method,
+                                      UserConfig().shell_logging_compress ^ ParametersManager().log_compress)
+        if ParametersManager().workspace_path:
+            if ParametersManager().mount_current_dir:
+                logger.warning(f'Workspace conflict detected (-cwd cannot be use with -w). Using: {ParametersManager().workspace_path}')
+            self.setWorkspaceShare(ParametersManager().workspace_path)
+        elif ParametersManager().mount_current_dir:
+            self.enableCwdShare()
+        if ParametersManager().privileged:
+            self.setPrivileged()
+        elif ParametersManager().capabilities is not None:
+            for cap in ParametersManager().capabilities:
+                self.addCapability(cap)
+        if ParametersManager().volumes is not None:
+            for volume in ParametersManager().volumes:
+                self.addRawVolume(volume)
+        if ParametersManager().devices is not None:
+            for device in ParametersManager().devices:
+                self.addUserDevice(device)
+        if ParametersManager().vpn is not None:
+            self.enableVPN()
+        if ParametersManager().envs is not None:
+            for env in ParametersManager().envs:
+                self.addRawEnv(env)
+        if UserConfig().desktop_default_enable ^ ParametersManager().desktop:
+            self.enableDesktop(ParametersManager().desktop_config)
+        if ParametersManager().comment:
+            self.addComment(ParametersManager().comment)
 
     # ===== Feature section =====
 
@@ -840,7 +889,7 @@ class ContainerConfig:
                 net_mode = self.__fallback_network_mode
         self.__networks.clear()
         if net_mode != ExegolNetworkMode.disable:
-            self.__networks.append(ExegolNetwork.instance_network(net_mode, self.__container_full_name))
+            self.__networks.append(ExegolNetwork.instance_network(net_mode, self.container_name))
 
     def setPrivileged(self, status: bool = True):
         """Set container as privileged"""

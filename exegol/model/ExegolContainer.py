@@ -39,10 +39,8 @@ class ExegolContainer(ExegolContainerTemplate, SelectableInterface):
                 image_name = "[red bold]BROKEN[/red bold]"
             # Create Exegol container from an existing docker container
             super().__init__(docker_container.name,
-                             config=ContainerConfig(docker_container),
-                             image=ExegolImage(name=image_name, docker_image=docker_image),
-                             hostname=docker_container.attrs.get('Config', {}).get('Hostname'),
-                             new_container=False)
+                             config=ContainerConfig(container=docker_container),
+                             image=ExegolImage(name=image_name, docker_image=docker_image))
             self.image.syncContainerData(docker_container)
             # At this stage, the container image object has an unknown status because no synchronization with a registry has been done.
             # This could be done afterwards (with container.image.autoLoad()) if necessary because it takes time.
@@ -50,11 +48,9 @@ class ExegolContainer(ExegolContainerTemplate, SelectableInterface):
         else:
             # Create Exegol container from a newly created docker container with its object template.
             super().__init__(docker_container.name,
-                             config=ContainerConfig(docker_container),
+                             config=ContainerConfig(container=docker_container),
                              # Rebuild config from docker object to update workspace path
-                             image=model.image,
-                             hostname=model.config.hostname,
-                             new_container=False)
+                             image=model.image)
             self.__new_container = True
         self.image.syncStatus()
 

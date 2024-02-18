@@ -37,7 +37,6 @@ class ExegolNetwork:
             if mode in [ExegolNetworkMode.host, ExegolNetworkMode.docker]:
                 return cls(net_mode=mode)
             elif mode == ExegolNetworkMode.nat:
-                raise NotImplementedError("WIP")
                 return cls(net_mode=mode, net_name=container_name)
             elif mode == ExegolNetworkMode.disable:
                 raise ValueError("Network disable cannot be created")
@@ -65,3 +64,9 @@ class ExegolNetwork:
         if self.__net_mode is ExegolNetworkMode.attached:
             return self.__net_name
         return self.__net_mode.name
+
+    def __repr__(self):
+        repr_str = self.__net_mode.value
+        if self.__net_mode in [ExegolNetworkMode.nat, ExegolNetworkMode.attached]:
+            repr_str += f" ({self.__net_name} : {self.__docker_net_mode.value})"
+        return repr_str

@@ -3,6 +3,8 @@ import logging
 import os
 from typing import Union, List, Tuple, Optional, cast, Sequence
 
+from rich.prompt import Prompt
+
 from exegol.config.ConstantConfig import ConstantConfig
 from exegol.config.EnvInfo import EnvInfo
 from exegol.config.UserConfig import UserConfig
@@ -441,63 +443,15 @@ class ExegolManager:
         return cast(Union[ExegolImage, ExegolContainer, List[ExegolImage], List[ExegolContainer]], user_selection)
 
     @classmethod
-    def __prepareContainerConfig(cls):
-        """Create Exegol configuration with user input"""
-        # Create default exegol config
-        config = ContainerConfig()
-        # Container configuration from user CLI options
-        if ParametersManager().X11:
-            config.enableGUI()
-        if ParametersManager().share_timezone:
-            config.enableSharedTimezone()
-        config.setNetworkMode(ParametersManager().network)
-        if ParametersManager().ports is not None:
-            for port in ParametersManager().ports:
-                config.addRawPort(port)
-        if ParametersManager().my_resources:
-            config.enableMyResources()
-        if ParametersManager().exegol_resources:
-            config.enableExegolResources()
-        if ParametersManager().log:
-            config.enableShellLogging(ParametersManager().log_method,
-                                      UserConfig().shell_logging_compress ^ ParametersManager().log_compress)
-        if ParametersManager().workspace_path:
-            if ParametersManager().mount_current_dir:
-                logger.warning(f'Workspace conflict detected (-cwd cannot be use with -w). Using: {ParametersManager().workspace_path}')
-            config.setWorkspaceShare(ParametersManager().workspace_path)
-        elif ParametersManager().mount_current_dir:
-            config.enableCwdShare()
-        if ParametersManager().privileged:
-            config.setPrivileged()
-        elif ParametersManager().capabilities is not None:
-            for cap in ParametersManager().capabilities:
-                config.addCapability(cap)
-        if ParametersManager().volumes is not None:
-            for volume in ParametersManager().volumes:
-                config.addRawVolume(volume)
-        if ParametersManager().devices is not None:
-            for device in ParametersManager().devices:
-                config.addUserDevice(device)
-        if ParametersManager().vpn is not None:
-            config.enableVPN()
-        if ParametersManager().envs is not None:
-            for env in ParametersManager().envs:
-                config.addRawEnv(env)
-        if UserConfig().desktop_default_enable ^ ParametersManager().desktop:
-            config.enableDesktop(ParametersManager().desktop_config)
-        if ParametersManager().comment:
-            config.addComment(ParametersManager().comment)
-        return config
-
-    @classmethod
     def __createContainer(cls, name: Optional[str]) -> ExegolContainer:
         """Create an ExegolContainer"""
+        if name is None:
+            name = Prompt.ask("[bold blue][?][/bold blue] Enter the name of your new exegol container", default="default")
         logger.verbose("Configuring new exegol container")
         # Create exegol config
         image: Optional[ExegolImage] = cast(ExegolImage, cls.__loadOrInstallImage())
-        config = cls.__prepareContainerConfig()
         assert image is not None  # load or install return an image
-        model = ExegolContainerTemplate(name, config, image, hostname=ParametersManager().hostname)
+        model = ExegolContainerTemplate(name, image, hostname=ParametersManager().hostname)
 
         # Recap
         ExegolTUI.printContainerRecap(model)
@@ -525,20 +479,19 @@ class ExegolManager:
     def __createTmpContainer(cls, image_name: Optional[str] = None) -> ExegolContainer:
         """Create a temporary ExegolContainer with custom entrypoint"""
         logger.verbose("Configuring new exegol container")
+        name = f"tmp-{binascii.b2a_hex(os.urandom(4)).decode('ascii')}"
         # Create exegol config
-        config = cls.__prepareContainerConfig()
+        image: ExegolImage = cast(ExegolImage, cls.__loadOrInstallImage(override_image=image_name))
+        model = ExegolContainerTemplate(name, image, hostname=ParametersManager().hostname)
         # When container exec a command as a daemon, the execution must be set on the container's entrypoint
         if ParametersManager().daemon:
             # Using formatShellCommand to support zsh aliases
             exec_payload, str_cmd = ExegolContainer.formatShellCommand(ParametersManager().exec, entrypoint_mode=True)
-            config.entrypointRunCmd()
-            config.addEnv("CMD", str_cmd)
-            config.addEnv("DISABLE_AUTO_UPDATE", "true")
+            model.config.entrypointRunCmd()
+            model.config.addEnv("CMD", str_cmd)
+            model.config.addEnv("DISABLE_AUTO_UPDATE", "true")
         # Workspace must be disabled for temporary container because host directory is never deleted
-        config.disableDefaultWorkspace()
-        name = f"tmp-{binascii.b2a_hex(os.urandom(4)).decode('ascii')}"
-        image: ExegolImage = cast(ExegolImage, cls.__loadOrInstallImage(override_image=image_name))
-        model = ExegolContainerTemplate(name, config, image, hostname=ParametersManager().hostname)
+        model.config.disableDefaultWorkspace()
 
         # Mount entrypoint as a volume (because in tmp mode the container is created with run instead of create method)
         model.config.addVolume(str(ConstantConfig.entrypoint_context_path_obj), "/.exegol/entrypoint.sh", must_exist=True, read_only=True)

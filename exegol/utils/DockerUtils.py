@@ -112,7 +112,7 @@ class DockerUtils:
                        "entrypoint": entrypoint,
                        "command": command,
                        "detach": True,
-                       "name": model.container_name,
+                       "name": model.getContainerName(),
                        "hostname": model.config.hostname,
                        "extra_hosts": model.config.getExtraHost(),
                        "devices": model.config.getDevices(),
@@ -150,10 +150,10 @@ class DockerUtils:
             logger.debug(err)
             model.rollback()
             try:
-                container = cls.__client.containers.list(all=True, filters={"name": model.container_name})
+                container = cls.__client.containers.list(all=True, filters={"name": model.getContainerName()})
                 if container is not None and len(container) > 0:
                     for c in container:
-                        if c.name == model.container_name:  # Search for exact match
+                        if c.name == model.getContainerName():  # Search for exact match
                             container[0].remove()
                             logger.debug("Container removed")
             except Exception:
