@@ -218,8 +218,13 @@ class ExegolContainer(ExegolContainerTemplate, SelectableInterface):
             self.__container.remove()
             logger.success(f"Container {self.name} successfully removed.")
         except NotFound:
-            logger.error(
-                f"The container {self.name} has already been removed (probably created as a temporary container).")
+            logger.error(f"The container {self.name} has already been removed (probably created as a temporary container).")
+        nets = self.config.getNetworks()
+        # Must be imported locally to avoid circular importation
+        from exegol.utils.DockerUtils import DockerUtils
+        for net in nets:
+            if net.shouldBeRemoved():
+                DockerUtils.removeNetwork(net.getNetworkName())
 
     def __removeVolume(self):
         """Remove private workspace volume directory if exist"""

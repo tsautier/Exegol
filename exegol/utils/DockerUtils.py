@@ -7,6 +7,7 @@ import docker
 from docker import DockerClient
 from docker.errors import APIError, DockerException, NotFound, ImageNotFound
 from docker.models.images import Image
+from docker.models.networks import Network
 from docker.models.volumes import Volume
 from requests import ReadTimeout
 
@@ -20,6 +21,7 @@ from exegol.exceptions.ExegolExceptions import ObjectNotFound
 from exegol.model.ExegolContainer import ExegolContainer
 from exegol.model.ExegolContainerTemplate import ExegolContainerTemplate
 from exegol.model.ExegolImage import ExegolImage
+from exegol.model.ExegolNetwork import ExegolNetwork
 from exegol.model.MetaImages import MetaImages
 from exegol.utils.ExeLog import logger, console, ExeLog
 from exegol.utils.WebUtils import WebUtils
@@ -132,6 +134,10 @@ class DockerUtils:
             docker_args["network_disabled"] = True
         else:
             docker_args["network"], docker_args["network_driver_opt"] = model.config.getNetwork()
+            if not cls.networkExist(docker_args["network"]):
+                if not cls.createNetwork(network_name=docker_args["network"], driver=docker_args["network_driver_opt"]):
+                    logger.critical("Unable to create the dedicated network for the new container. Aborting.")
+
         # Handle temporary arguments
         if temporary:
             # Only the 'run' function support the "remove" parameter
@@ -156,6 +162,11 @@ class DockerUtils:
                         if c.name == model.getContainerName():  # Search for exact match
                             container[0].remove()
                             logger.debug("Container removed")
+            except Exception:
+                pass
+            try:
+                if cls.removeNetwork(docker_args["network"]):
+                    logger.debug("Network removed")
             except Exception:
                 pass
             logger.critical("Error while creating exegol container. Exiting.")
@@ -255,6 +266,103 @@ class DockerUtils:
             logger.critical("Received a timeout error, Docker is busy... Unable to enumerate volume, retry later.")
             return None  # type: ignore
         return volume
+
+    # # # Network Section # # #
+
+    @classmethod
+    def listAttachableNetworks(cls) -> List[Network]:
+        """List every non-default networks"""
+        networks = []
+        try:
+            networks = cls.__client.networks.list()
+        except APIError as e:
+            raise e
+        except ReadTimeout:
+            logger.critical("Received a timeout error, Docker is busy... Unable to enumerate volume, retry later.")
+        for net in networks.copy():
+            if net.name in ExegolNetwork.DEFAULT_DOCKER_NETWORK:
+                networks.remove(net)
+        return networks
+
+    @classmethod
+    def listExegolNetworks(cls) -> List[Network]:
+        """List every exegol networks"""
+        try:
+            return cls.__client.networks.list(filters={"label": "source=exegol"})
+        except APIError as e:
+            raise e
+        except ReadTimeout:
+            logger.critical("Received a timeout error, Docker is busy... Unable to enumerate volume, retry later.")
+
+    @classmethod
+    def getNetwork(cls, network_name: str, exegol_only: bool = False) -> Optional[Network]:
+        """Find a specific network"""
+        networks: List[Network] = []
+        filter = {}
+        if exegol_only:
+            filter["label"] = "source=exegol"
+        try:
+            networks = cls.__client.networks.list(names=network_name, filters=filter)
+        except APIError as e:
+            raise e
+        except ReadTimeout:
+            logger.critical("Received a timeout error, Docker is busy... Unable to enumerate volume, retry later.")
+        for net in networks:
+            # Search for an exact match
+            if net.name == network_name:
+                return net
+        return None
+
+    @classmethod
+    def networkExist(cls, network_name: str) -> bool:
+        """Return True is the supplied network name exist"""
+        return cls.getNetwork(network_name) is not None
+
+    @classmethod
+    def createNetwork(cls, network_name: str, driver: str) -> bool:
+        """Create a new exegol network"""
+        # ip_pool = IPAMPool()
+        # config = IPAMConfig(pool_configs=[ip_pool])
+        # TODO use custom network range
+        try:
+            network: Network = cls.__client.networks.create(name=network_name, driver=driver, labels={"source": "exegol"}, check_duplicate=True)  # ipam=config
+            return True
+        except APIError as e:
+            if e.status_code == 409:
+                logger.error("This network already exist.")
+                return False
+            raise e
+        except ReadTimeout:
+            logger.critical("Received a timeout error, Docker is busy... Unable to enumerate volume, retry later.")
+        return False
+
+    @classmethod
+    def removeNetwork(cls, network_name: Optional[str] = None, network: Optional[Network] = None) -> bool:
+        """Remove exegol network"""
+        if network is None:
+            if network_name is None:
+                raise ValueError("One of the parameter must be supplied.")
+            elif network_name in ExegolNetwork.DEFAULT_DOCKER_NETWORK:
+                # Default docker driver cannot be deleted
+                return False
+            network = cls.getNetwork(network_name, exegol_only=True)
+
+        if network is not None:
+            if network.name in ExegolNetwork.DEFAULT_DOCKER_NETWORK:
+                # Default docker driver cannot be deleted
+                return False
+            try:
+                network.remove()
+                logger.success(f"Dedicated network successfully removed.")
+                return True
+            except NotFound:
+                logger.verbose(f"The dedicated network {network.name} was already removed.")
+            except APIError as e:
+                logger.error(f"The associated dedicated network cannot be automatically removed. "
+                             f"You have to delete it manually ({network.name}). Error: {e.explanation}")
+        else:
+            logger.info(f"The network {network_name} will not be deleted. Only exegol network can be automatically deleted.")
+        return False
 
     # # # Image Section # # #
 
@@ -589,8 +697,8 @@ class DockerUtils:
                     else:
                         logger.debug(f"Unexpected error after timeout: {err}")
                 except ReadTimeout:
-                    wait_time = wait_time + wait_time*i
-                    logger.info(f"Docker timeout again ({i+1}/{max_retry}). Next retry in {wait_time} seconds...")
+                    wait_time = wait_time + wait_time * i
+                    logger.info(f"Docker timeout again ({i + 1}/{max_retry}). Next retry in {wait_time} seconds...")
                     sleep(wait_time)  # Wait x seconds before retry
             logger.error(f"The deletion of the image '{image_name}' has timeout, the deletion may be incomplete.")
         return False

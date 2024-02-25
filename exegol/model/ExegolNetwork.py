@@ -1,8 +1,6 @@
 from enum import Enum
 from typing import Optional, Union, List
 
-from docker.types import EndpointConfig
-
 
 class DockerDrivers(Enum):
     """Enum for Docker driver type"""
@@ -21,13 +19,17 @@ class ExegolNetworkMode(Enum):
 
 
 class ExegolNetwork:
+    DEFAULT_DOCKER_NETWORK = [d.value for d in DockerDrivers]
+
+    __DEFAULT_NETWORK_DRIVER = DockerDrivers.Bridge
+
     def __init__(self, net_mode: ExegolNetworkMode = ExegolNetworkMode.host, net_name: Optional[str] = None):
         self.__net_mode: ExegolNetworkMode = net_mode
         self.__net_name: str = net_name if net_name is not None else net_mode.value
         try:
             self.__docker_net_mode: DockerDrivers = DockerDrivers(self.__net_name)
         except ValueError:
-            self.__docker_net_mode = DockerDrivers.Bridge
+            self.__docker_net_mode = self.__DEFAULT_NETWORK_DRIVER
 
     @classmethod
     def instance_network(cls, mode: Union[ExegolNetworkMode, str], container_name: str):
@@ -60,10 +62,16 @@ class ExegolNetwork:
     def getNetworkMode(self) -> ExegolNetworkMode:
         return self.__net_mode
 
+    def getNetworkName(self):
+        return self.__net_name
+
     def getTextNetworkMode(self) -> str:
         if self.__net_mode is ExegolNetworkMode.attached:
             return self.__net_name
         return self.__net_mode.name
+
+    def shouldBeRemoved(self):
+        return self.__net_mode == ExegolNetworkMode.nat
 
     def __repr__(self):
         repr_str = self.__net_mode.value

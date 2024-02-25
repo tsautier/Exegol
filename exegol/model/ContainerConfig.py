@@ -282,7 +282,7 @@ class ContainerConfig:
             self.enableExegolResources()
         if ParametersManager().log:
             self.enableShellLogging(ParametersManager().log_method,
-                                      UserConfig().shell_logging_compress ^ ParametersManager().log_compress)
+                                    UserConfig().shell_logging_compress ^ ParametersManager().log_compress)
         if ParametersManager().workspace_path:
             if ParametersManager().mount_current_dir:
                 logger.warning(f'Workspace conflict detected (-cwd cannot be use with -w). Using: {ParametersManager().workspace_path}')
@@ -936,10 +936,14 @@ class ContainerConfig:
             return False
 
     def getNetwork(self) -> (str, str):
-        """Network mode, docker term getter"""
+        """First Network getter for docker API on container creation"""
         if len(self.__networks) > 0:
             return self.__networks[0].getNetworkConfig()
         return None, None
+
+    def getNetworks(self):
+        """Networks getter"""
+        return self.__networks
 
     def setExtraHost(self, host: str, ip: str):
         """Add or update an extra host to resolv inside the container."""
