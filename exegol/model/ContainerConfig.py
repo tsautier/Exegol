@@ -81,12 +81,6 @@ class ContainerConfig:
         """Container config default value"""
         self.container_name: Optional[str] = container_name if (container_name is None) ^ \
                                                                (container_name is not None and container_name.startswith("exegol-")) else f'exegol-{container_name}'
-        if hostname is not None:
-            self.hostname = hostname
-            if container is None:  # if this is a new container
-                self.addEnv(ContainerConfig.ExegolEnv.exegol_name.value, container_name)
-        else:
-            self.hostname = self.container_name if self.container_name is not None else ""
         self.__enable_gui: bool = False
         self.__share_timezone: bool = False
         self.__my_resources: bool = False
@@ -125,6 +119,13 @@ class ContainerConfig:
         self.__comment: Optional[str] = None
         self.__username: str = "root"
         self.__passwd: Optional[str] = self.generateRandomPassword()
+        if hostname is not None:
+            self.hostname = hostname
+            if container is None:  # if this is a new container
+                self.addEnv(ContainerConfig.ExegolEnv.exegol_name.value, container_name)
+        else:
+            self.hostname = self.container_name if self.container_name is not None else ""
+
 
         if container is not None:
             self.__parseContainerConfig(container)
