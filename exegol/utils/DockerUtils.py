@@ -133,9 +133,9 @@ class DockerUtils:
         if model.config.isNetworkDisabled():
             docker_args["network_disabled"] = True
         else:
-            docker_args["network"], docker_args["network_driver_opt"] = model.config.getNetwork()
+            docker_args["network"], network_driver = model.config.getNetwork()
             if not cls.networkExist(docker_args["network"]):
-                if not cls.createNetwork(network_name=docker_args["network"], driver=docker_args["network_driver_opt"]):
+                if not cls.createNetwork(network_name=docker_args["network"], driver=network_driver):
                     logger.critical("Unable to create the dedicated network for the new container. Aborting.")
 
         # Handle temporary arguments
