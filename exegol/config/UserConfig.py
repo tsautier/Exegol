@@ -164,7 +164,7 @@ config:
 
         # Network section
         network_data = config_data.get("network", {})
-        self.network_default_mode = self._load_config_str(network_data, 'default_network', self.network_default_mode)  # TODO add choices depending on dynamic network list
+        self.network_default_mode = self._load_config_str(network_data, 'default_network', self.network_default_mode, choices=NetworkUtils.get_options())
         self.network_fallback_mode = self._load_config_str(network_data, 'fallback_network', self.network_fallback_mode, choices={'nat', 'docker'})
         self.network_dedicated_range = self._load_config_str(network_data, 'exegol_dedicated_range')  # Dynamic default
         self.network_default_netmask = NetworkUtils.parse_netmask(self._load_config_str(network_data, 'exegol_default_netmask', str(self.network_default_netmask)), default=self.network_default_netmask)

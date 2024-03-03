@@ -11,11 +11,11 @@ class DockerDrivers(Enum):
 
 class ExegolNetworkMode(Enum):
     """Enum for user display"""
-    disable = 'none'
-    host = 'host'
-    docker = 'bridge'
+    disable = 'Disable'
+    host = 'Host'
+    docker = 'Docker'
     nat = 'NAT'  # need pre-process
-    attached = 'external'  # need pre-process
+    attached = 'External'  # need pre-process
 
 
 class ExegolNetwork:
@@ -26,9 +26,11 @@ class ExegolNetwork:
     def __init__(self, net_mode: ExegolNetworkMode = ExegolNetworkMode.host, net_name: Optional[str] = None):
         self.__net_mode: ExegolNetworkMode = net_mode
         self.__net_name: str = net_name if net_name is not None else net_mode.value
-        try:
-            self.__docker_net_mode: DockerDrivers = DockerDrivers(self.__net_name)
-        except ValueError:
+        if self.__net_mode == ExegolNetworkMode.disable:
+            self.__docker_net_mode: DockerDrivers = DockerDrivers.Disable
+        elif self.__net_mode == ExegolNetworkMode.host:
+            self.__docker_net_mode = DockerDrivers.Host
+        else:
             self.__docker_net_mode = self.__DEFAULT_NETWORK_DRIVER
 
     @classmethod
@@ -69,7 +71,7 @@ class ExegolNetwork:
     def getTextNetworkMode(self) -> str:
         if self.__net_mode is ExegolNetworkMode.attached:
             return self.__net_name
-        return self.__net_mode.name
+        return self.__net_mode.value
 
     def shouldBeRemoved(self):
         return self.__net_mode == ExegolNetworkMode.nat

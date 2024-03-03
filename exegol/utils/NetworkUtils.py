@@ -1,9 +1,10 @@
 import ipaddress
-from typing import Union
+from typing import Union, Set
 
 import ifaddr
 from rich.prompt import Prompt
 
+from exegol.model.ExegolNetwork import ExegolNetworkMode
 from exegol.utils.ExeLog import logger, console
 
 
@@ -93,3 +94,9 @@ class NetworkUtils:
                     pass
         logger.error(f"The supplied netmask is invalid (must be IPv4): {netmask}")
         return default
+
+    @classmethod
+    def get_options(cls) -> Set[str]:
+        options = [x.name for x in ExegolNetworkMode if x != ExegolNetworkMode.attached]
+
+        return set(options)
