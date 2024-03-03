@@ -79,8 +79,12 @@ class ContainerConfig:
 
     def __init__(self, container: Optional[Container] = None, container_name: Optional[str] = None, hostname: Optional[str] = None):
         """Container config default value"""
-        self.container_name: Optional[str] = container_name if (container_name is None) ^ \
-                                                               (container_name is not None and container_name.startswith("exegol-")) else f'exegol-{container_name}'
+        if container_name is None:
+            self.container_name: str = ""
+        elif container_name.startswith("exegol-"):
+            self.container_name = container_name
+        else:
+            self.container_name = f'exegol-{container_name}'
         self.__enable_gui: bool = False
         self.__share_timezone: bool = False
         self.__my_resources: bool = False
@@ -122,10 +126,9 @@ class ContainerConfig:
         if hostname is not None:
             self.hostname = hostname
             if container is None:  # if this is a new container
-                self.addEnv(ContainerConfig.ExegolEnv.exegol_name.value, container_name)
+                self.addEnv(ContainerConfig.ExegolEnv.exegol_name.value, self.container_name)
         else:
-            self.hostname = self.container_name if self.container_name is not None else ""
-
+            self.hostname = self.container_name
 
         if container is not None:
             self.__parseContainerConfig(container)
@@ -656,7 +659,7 @@ class ContainerConfig:
             if not Confirm(f"Are you sure you want to configure a VPN container based on the host's network?",
                            default=False):
                 logger.info("Changing network mode to custom")
-                self.setNetworkMode(False)
+                self.setNetworkMode(self.__fallback_network_mode)
         # Add NET_ADMIN capabilities, this privilege is necessary to mount network tunnels
         self.addCapability("NET_ADMIN")
         # Add sysctl ipv6 config, some VPN connection need IPv6 to be enabled
@@ -873,13 +876,13 @@ class ContainerConfig:
         """Set container's network mode, true for host, false for bridge"""
         try:
             if type(network) is str:
-                net_mode = ExegolNetworkMode[network.lower()]
+                net_mode: Union[ExegolNetworkMode, str] = ExegolNetworkMode[network.lower()]
             else:
                 net_mode = network
         except KeyError:
             # TODO handle every use case, existing / non-existing network etc
             net_mode = network
-        if net_mode == ExegolNetworkMode.host:
+        if type(net_mode) is ExegolNetworkMode and net_mode == ExegolNetworkMode.host:
             if len(self.__ports) > 0:
                 logger.warning("Host mode cannot be set with NAT ports configured. Disabling the host network mode.")
                 net_mode = self.__fallback_network_mode
@@ -888,8 +891,11 @@ class ContainerConfig:
                 logger.verbose("Official doc: https://docs.docker.com/network/host/")
                 logger.info("To share network ports between the host and exegol, use the [bright_blue]--port[/bright_blue] parameter.")
                 net_mode = self.__fallback_network_mode
+        else:
+            # TODO handle every use case, existing / non-existing network etc
+            pass
         self.__networks.clear()
-        if net_mode != ExegolNetworkMode.disable:
+        if type(net_mode) is str or net_mode != ExegolNetworkMode.disable:
             self.__networks.append(ExegolNetwork.instance_network(net_mode, self.container_name))
 
     def setPrivileged(self, status: bool = True):
@@ -936,7 +942,7 @@ class ContainerConfig:
             # When the sysctl is not present
             return False
 
-    def getNetwork(self) -> (str, str):
+    def getNetwork(self) -> Tuple[Optional[str], Optional[str]]:
         """First Network getter for docker API on container creation"""
         if len(self.__networks) > 0:
             return self.__networks[0].getNetworkConfig()

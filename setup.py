@@ -60,7 +60,8 @@ setup(
         'rich~=13.7.0',
         'PyYAML',
         'GitPython~=3.1.40',
-        'argcomplete~=3.2.1'
+        'argcomplete~=3.2.1',
+        'ifaddr~=0.2.0'
     ],
     packages=find_packages(exclude=["tests"]),
     include_package_data=True,

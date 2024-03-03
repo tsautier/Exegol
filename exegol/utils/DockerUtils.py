@@ -9,6 +9,7 @@ from docker.errors import APIError, DockerException, NotFound, ImageNotFound
 from docker.models.images import Image
 from docker.models.networks import Network
 from docker.models.volumes import Volume
+from docker.types import IPAMPool, IPAMConfig
 from requests import ReadTimeout
 
 from exegol.config.ConstantConfig import ConstantConfig
@@ -24,6 +25,7 @@ from exegol.model.ExegolImage import ExegolImage
 from exegol.model.ExegolNetwork import ExegolNetwork
 from exegol.model.MetaImages import MetaImages
 from exegol.utils.ExeLog import logger, console, ExeLog
+from exegol.utils.NetworkUtils import NetworkUtils
 from exegol.utils.WebUtils import WebUtils
 
 
@@ -134,7 +136,9 @@ class DockerUtils:
             docker_args["network_disabled"] = True
         else:
             docker_args["network"], network_driver = model.config.getNetwork()
-            if not cls.networkExist(docker_args["network"]):
+            if (docker_args["network"] is not None and
+                    network_driver is not None and
+                    not cls.networkExist(docker_args["network"])):
                 if not cls.createNetwork(network_name=docker_args["network"], driver=network_driver):
                     logger.critical("Unable to create the dedicated network for the new container. Aborting.")
 
@@ -287,12 +291,14 @@ class DockerUtils:
     @classmethod
     def listExegolNetworks(cls) -> List[Network]:
         """List every exegol networks"""
+        networks = []
         try:
-            return cls.__client.networks.list(filters={"label": "source=exegol"})
+            networks = cls.__client.networks.list(filters={"label": "source=exegol"})
         except APIError as e:
             raise e
         except ReadTimeout:
             logger.critical("Received a timeout error, Docker is busy... Unable to enumerate volume, retry later.")
+        return networks
 
     @classmethod
     def getNetwork(cls, network_name: str, exegol_only: bool = False) -> Optional[Network]:
@@ -321,11 +327,10 @@ class DockerUtils:
     @classmethod
     def createNetwork(cls, network_name: str, driver: str) -> bool:
         """Create a new exegol network"""
-        # ip_pool = IPAMPool()
-        # config = IPAMConfig(pool_configs=[ip_pool])
-        # TODO use custom network range
+        ip_pool = IPAMPool(subnet=str(NetworkUtils.get_next_available_range(UserConfig().network_dedicated_range, UserConfig().network_default_netmask)))
+        config = IPAMConfig(pool_configs=[ip_pool])
         try:
-            network: Network = cls.__client.networks.create(name=network_name, driver=driver, labels={"source": "exegol"}, check_duplicate=True)  # ipam=config
+            network: Network = cls.__client.networks.create(name=network_name, driver=driver, labels={"source": "exegol"}, check_duplicate=True, ipam=config)
             return True
         except APIError as e:
             if e.status_code == 409:

@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Optional, Union, List
+from typing import Optional, Union, List, Tuple
 
 
 class DockerDrivers(Enum):
@@ -36,6 +36,7 @@ class ExegolNetwork:
         if type(mode) is str:
             return cls(net_mode=ExegolNetworkMode.attached, net_name=mode)
         else:
+            assert type(mode) is ExegolNetworkMode
             if mode in [ExegolNetworkMode.host, ExegolNetworkMode.docker]:
                 return cls(net_mode=mode)
             elif mode == ExegolNetworkMode.nat:
@@ -56,7 +57,7 @@ class ExegolNetwork:
 
         return results
 
-    def getNetworkConfig(self) -> (str, str):
+    def getNetworkConfig(self) -> Tuple[str, str]:
         return self.__net_name, self.__docker_net_mode.value
 
     def getNetworkMode(self) -> ExegolNetworkMode:

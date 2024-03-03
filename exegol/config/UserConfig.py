@@ -1,10 +1,11 @@
 from pathlib import Path
-from typing import List
+from typing import List, cast
 
 from exegol.config.ConstantConfig import ConstantConfig
 from exegol.console.ConsoleFormat import boolFormatter
 from exegol.utils.DataFileUtils import DataFileUtils
 from exegol.utils.MetaSingleton import MetaSingleton
+from exegol.utils.NetworkUtils import NetworkUtils
 
 
 class UserConfig(DataFileUtils, metaclass=MetaSingleton):
@@ -16,23 +17,39 @@ class UserConfig(DataFileUtils, metaclass=MetaSingleton):
     desktop_available_proto = {'http', 'vnc'}
 
     def __init__(self):
+
         # Defaults User config
         self.private_volume_path: Path = ConstantConfig.exegol_config_path / "workspaces"
         self.my_resources_path: Path = ConstantConfig.exegol_config_path / "my-resources"
         self.exegol_resources_path: Path = self.__default_resource_location('exegol-resources')
+        # Config
         self.auto_check_updates: bool = True
         self.auto_remove_images: bool = True
         self.auto_update_workspace_fs: bool = False
         self.default_start_shell: str = "zsh"
+        # Shell logging
         self.shell_logging_method: str = "asciinema"
         self.shell_logging_compress: bool = True
+        # Desktop
         self.desktop_default_enable: bool = False
         self.desktop_default_localhost: bool = True
         self.desktop_default_proto: str = "http"
+        # Network
+        self.network_default_mode: str = "host"
+        self.network_fallback_mode: str = "nat"
+        self.network_dedicated_range: str = ""  # Finding a default network can require a user interaction, loading only if needed from NetworkUtils.get_default_large_range_text().
+        self.network_default_netmask: int = 28
 
-        super().__init__("config.yml", "yml")
+        # Dynamic default config
+        dynamic_default = {"exegol_dedicated_range": NetworkUtils.get_default_large_range_text}
+        super().__init__("config.yml", "yml", dynamic_default)
 
     def _build_file_content(self):
+        # Dynamic default (if not already defined)
+        if not self.network_dedicated_range:
+            self.network_dedicated_range = cast(str, self._get_dynamic_default("exegol_dedicated_range"))
+
+        # Config builder
         config = f"""# Exegol configuration
 # Full documentation: https://exegol.readthedocs.io/en/latest/exegol-wrapper/advanced-uses.html#id1
 
@@ -80,6 +97,24 @@ config:
     
         # Desktop service is exposed on localhost by default. If set to true, services will be exposed on localhost (127.0.0.1) otherwise it will be exposed on 0.0.0.0. This setting can be overwritten with --desktop-config
         localhost_by_default: {self.desktop_default_localhost}
+    
+    # Configure your Exegol networks
+    network:
+    
+        # Default network mode for any new container
+        default_network: {self.network_default_mode}
+        
+        # Fallback bridge network mode
+        # If the default network (host) mode cannot be used, a "bridge" network will automatically be selected as a replacement. (This mode can be "nat" or "docker")
+        fallback_network: {self.network_fallback_mode}
+        
+        # Network range dedicated for exegol containers
+        # Each new container using 'nat' network will have a dedicated sub-network within this range (default to the last private /16 class B available)
+        exegol_dedicated_range: {self.network_dedicated_range}
+        
+        # Exegol dedicated sub-network netmask.
+        # By default, docker creates huge subnets, but exegol overrides this by using a much smaller subnet mask to optimize the use of network slots. (default to /28 with CIDR format)
+        exegol_default_netmask: {self.network_default_netmask}
 
 """
         # TODO handle default image selection
@@ -124,8 +159,15 @@ config:
         # Desktop section
         desktop_data = config_data.get("desktop", {})
         self.desktop_default_enable = self._load_config_bool(desktop_data, 'enabled_by_default', self.desktop_default_enable)
-        self.desktop_default_proto = self._load_config_str(desktop_data, 'default_proto', self.desktop_default_proto, choices=self.desktop_available_proto)
+        self.desktop_default_proto = self._load_config_str(desktop_data, 'default_protocol', self.desktop_default_proto, choices=self.desktop_available_proto)
         self.desktop_default_localhost = self._load_config_bool(desktop_data, 'localhost_by_default', self.desktop_default_localhost)
+
+        # Network section
+        network_data = config_data.get("network", {})
+        self.network_default_mode = self._load_config_str(network_data, 'default_network', self.network_default_mode)  # TODO add choices depending on dynamic network list
+        self.network_fallback_mode = self._load_config_str(network_data, 'fallback_network', self.network_fallback_mode, choices={'nat', 'docker'})
+        self.network_dedicated_range = self._load_config_str(network_data, 'exegol_dedicated_range')  # Dynamic default
+        self.network_default_netmask = NetworkUtils.parse_netmask(self._load_config_str(network_data, 'exegol_default_netmask', str(self.network_default_netmask)), default=self.network_default_netmask)
 
     def get_configs(self) -> List[str]:
         """User configs getter each options"""
@@ -143,6 +185,10 @@ config:
             f"Desktop enabled by default: {boolFormatter(self.desktop_default_enable)}",
             f"Desktop default protocol: [blue]{self.desktop_default_proto}[/blue]",
             f"Desktop default host: [blue]{'localhost' if self.desktop_default_localhost else '0.0.0.0'}[/blue]",
+            f"Network default mode: [blue]{self.network_default_mode}[/blue]",
+            f"Network fallback mode: [blue]{self.network_fallback_mode}[/blue]",
+            f"Network range: [blue]{self.network_dedicated_range}[/blue]",
+            f"Network exegol netmask: [blue]{self.network_default_netmask}[/blue]",
         ]
         # TUI can't be called from here to avoid circular importation
         return configs
