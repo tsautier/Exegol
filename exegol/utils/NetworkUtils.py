@@ -81,7 +81,7 @@ class NetworkUtils:
         else:
             assert type(netmask) is str
             if netmask.startswith("/"):
-                netmask = netmask.removeprefix("/")
+                netmask = netmask[1:]
             try:
                 result = int(netmask)
                 if 0 > result > 32:
