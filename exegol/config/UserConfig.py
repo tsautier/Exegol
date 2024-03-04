@@ -3,6 +3,7 @@ from typing import List, cast
 
 from exegol.config.ConstantConfig import ConstantConfig
 from exegol.console.ConsoleFormat import boolFormatter
+from exegol.model.ExegolNetwork import ExegolNetworkMode
 from exegol.utils.DataFileUtils import DataFileUtils
 from exegol.utils.MetaSingleton import MetaSingleton
 from exegol.utils.NetworkUtils import NetworkUtils
@@ -35,7 +36,7 @@ class UserConfig(DataFileUtils, metaclass=MetaSingleton):
         self.desktop_default_localhost: bool = True
         self.desktop_default_proto: str = "http"
         # Network
-        self.network_default_mode: str = "host"
+        self.network_default_mode: str = ExegolNetworkMode.host.name
         self.network_fallback_mode: str = "nat"
         self.network_dedicated_range: str = ""  # Finding a default network can require a user interaction, loading only if needed from NetworkUtils.get_default_large_range_text().
         self.network_default_netmask: int = 28

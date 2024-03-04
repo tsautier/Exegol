@@ -5,6 +5,7 @@ from argcomplete.completers import EnvironCompleter, DirectoriesCompleter, Files
 from exegol.config.UserConfig import UserConfig
 from exegol.console.cli.ExegolCompleter import ContainerCompleter, ImageCompleter, VoidCompleter, DesktopConfigCompleter
 from exegol.console.cli.actions.Command import Option, GroupArg
+from exegol.model.ExegolNetwork import ExegolNetworkMode
 from exegol.utils.NetworkUtils import NetworkUtils
 
 
@@ -165,7 +166,7 @@ class ContainerCreation(ContainerSelector, ImageSelector):
         self.network = Option("--network",
                               dest="network",
                               action="store",
-                              default="host",
+                              default=ExegolNetworkMode.host.name,
                               choices=NetworkUtils.get_options(),
                               help="Select the type of network to which the container will be attached (default: [blue]host[/blue])")
         self.share_timezone = Option("--disable-shared-timezones",

@@ -872,7 +872,7 @@ class ContainerConfig:
         logger.verbose(f"Config: Sharing workspace directory {path}")
         self.__workspace_custom_path = str(path)
 
-    def setNetworkMode(self, network: Union[ExegolNetworkMode, str] = "host"):
+    def setNetworkMode(self, network: Union[ExegolNetworkMode, str] = ExegolNetworkMode.host):
         """Set container's network mode, true for host, false for bridge"""
         try:
             if type(network) is str:
