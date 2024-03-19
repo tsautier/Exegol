@@ -880,8 +880,9 @@ class ContainerConfig:
             else:
                 net_mode = network
         except KeyError:
-            # TODO handle every use case, existing / non-existing network etc
             net_mode = network
+
+        # Check for host mode incompatibility
         if type(net_mode) is ExegolNetworkMode and net_mode == ExegolNetworkMode.host:
             if len(self.__ports) > 0:
                 logger.warning("Host mode cannot be set with NAT ports configured. Disabling the host network mode.")
@@ -891,9 +892,7 @@ class ContainerConfig:
                 logger.verbose("Official doc: https://docs.docker.com/network/host/")
                 logger.info("To share network ports between the host and exegol, use the [bright_blue]--port[/bright_blue] parameter.")
                 net_mode = self.__fallback_network_mode
-        else:
-            # TODO handle every use case, existing / non-existing network etc
-            pass
+
         self.__networks.clear()
         if type(net_mode) is str or net_mode != ExegolNetworkMode.disable:
             self.__networks.append(ExegolNetwork.instance_network(net_mode, self.container_name))
@@ -1299,7 +1298,7 @@ class ContainerConfig:
 
     # ===== User parameter parsing section =====
 
-    def addRawVolume(self, volume_string):
+    def addRawVolume(self, volume_string: str):
         """Add a volume to the container configuration from raw text input.
         Expected format is: /source/path:/target/mount:rw"""
         logger.debug(f"Parsing raw volume config: {volume_string}")
