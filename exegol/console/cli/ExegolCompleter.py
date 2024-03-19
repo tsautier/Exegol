@@ -7,7 +7,10 @@ from exegol.config.DataCache import DataCache
 from exegol.config.UserConfig import UserConfig
 from exegol.manager.UpdateManager import UpdateManager
 from exegol.utils.DockerUtils import DockerUtils
+from exegol.utils.NetworkUtils import NetworkUtils
 
+
+# Debug : argcomplete.warn('debug message')
 
 def ContainerCompleter(prefix: str, parsed_args: Namespace, **kwargs) -> Tuple[str, ...]:
     """Function to dynamically load a container list for CLI autocompletion purpose"""
@@ -80,12 +83,22 @@ def BuildProfileCompleter(prefix: str, parsed_args: Namespace, **kwargs) -> Tupl
 
 
 def DesktopConfigCompleter(prefix: str, **kwargs) -> Tuple[str, ...]:
-    options = list(UserConfig.desktop_available_proto)
-    for obj in options:
-        if prefix and not obj.lower().startswith(prefix.lower()):
-            options.remove(obj)
-    # TODO add interface enum
-    return tuple(options)
+    result = []
+    parts = prefix.split(':')
+    if len(parts) <= 1:
+        # First part, suggest available protocol
+        proto_options = list(UserConfig.desktop_available_proto)
+        for obj in proto_options:
+            if prefix is not None and obj.lower().startswith(prefix.lower()):
+                result.append(obj)
+    elif len(parts) == 2:
+        # Second part, autocomplet host interfaces
+        addr_options = NetworkUtils.get_host_addresses()
+        for obj in addr_options:
+            if obj.startswith(parts[-1]):
+                result.append(parts[0] + ':' + obj)
+
+    return tuple(result)
 
 
 def VoidCompleter(**kwargs) -> Tuple:

@@ -12,6 +12,16 @@ class NetworkUtils:
     adapters = ifaddr.get_adapters()
 
     @classmethod
+    def get_host_addresses(cls) -> Set[str]:
+        result = set()
+        for adapter in cls.adapters:
+            for ip in adapter.ips:
+                # Filter for IPv4
+                if ip.is_IPv4:
+                    result.add(str(ip.ip))
+        return result
+
+    @classmethod
     def get_default_large_range(cls) -> ipaddress.IPv4Network:
         available_networks = []
         for net in ipaddress.IPv4Network("172.16.0.0/12").subnets(new_prefix=16):
