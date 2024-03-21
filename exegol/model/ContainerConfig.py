@@ -23,7 +23,7 @@ from exegol.console.ExegolPrompt import Confirm
 from exegol.console.cli.ParametersManager import ParametersManager
 from exegol.exceptions.ExegolExceptions import ProtocolNotSupported, CancelOperation
 from exegol.model.ExegolModules import ExegolModules
-from exegol.model.ExegolNetwork import ExegolNetwork, ExegolNetworkMode
+from exegol.model.ExegolNetwork import ExegolNetwork, ExegolNetworkMode, DockerDrivers
 from exegol.utils import FsUtils
 from exegol.utils.ExeLog import logger, ExeLog
 from exegol.utils.GuiUtils import GuiUtils
@@ -1034,6 +1034,13 @@ class ContainerConfig:
                 return True
         return False
 
+    def isNetworkBridge(self) -> bool:
+        """Return True if the container is attached to the host network"""
+        for net in self.__networks:
+            if net.getNetworkDriver() == DockerDrivers.Bridge:
+                return True
+        return False
+
     def isNetworkDisabled(self) -> bool:
         """Return True if the container is not connected to any network"""
         return len(self.__networks) == 0
@@ -1497,7 +1504,7 @@ class ContainerConfig:
             result += f"{k}={v}{os.linesep}"
         return result
 
-    def getTextPorts(self) -> str:
+    def getTextPorts(self, is_running: bool = True) -> str:
         """Text formatter for Ports configuration.
         Dict Port key = container port/protocol
         Dict Port Values:
@@ -1506,8 +1513,12 @@ class ContainerConfig:
           tuple = (host_ip, port)
           list of int = open multiple host port
           list of dict = open one or more ports on host, key ('HostIp' / 'HostPort') and value ip or port"""
+
+        # Port configuration cannot be fetched from docker until container startup
+        if self.isNetworkBridge() and len(self.__ports) == 0 and not is_running:
+            return "[bright_black]Container must be started first[/bright_black]"
+
         result = ''
-        # TODO if network bridge and container not started, ports config cannot be printed: add a user warning message
 
         start_host_ip = None
         start_host_port = None

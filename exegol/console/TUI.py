@@ -242,7 +242,7 @@ class ExegolTUI:
                               container.config.getTextFeatures(verbose_mode),
                               container.config.getTextMounts(debug_mode),
                               container.config.getTextDevices(debug_mode),
-                              container.config.getTextPorts(),
+                              container.config.getTextPorts(is_running=container.isRunning()),
                               container.config.getTextEnvs(debug_mode))
             else:
                 table.add_row(container.getDisplayName(), container.getTextStatus(), container.image.getDisplayName(),
@@ -420,7 +420,7 @@ class ExegolTUI:
         # Fetch data
         devices = container.config.getTextDevices(logger.isEnabledFor(ExeLog.VERBOSE))
         envs = container.config.getTextEnvs(logger.isEnabledFor(ExeLog.VERBOSE))
-        ports = container.config.getTextPorts()
+        ports = container.config.getTextPorts(is_running=container.isRunning() if type(container) is ExegolContainer else True)
         sysctls = container.config.getSysctls()
         capabilities = container.config.getCapabilities()
         volumes = container.config.getTextMounts(logger.isEnabledFor(ExeLog.VERBOSE))

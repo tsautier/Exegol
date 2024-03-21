@@ -68,6 +68,9 @@ class ExegolNetwork:
     def getNetworkMode(self) -> ExegolNetworkMode:
         return self.__net_mode
 
+    def getNetworkDriver(self) -> DockerDrivers:
+        return self.__docker_net_mode
+
     def getNetworkName(self):
         return self.__net_name
 

@@ -43,3 +43,7 @@ class ExegolContainerTemplate:
         if self.getContainerName() != self.config.hostname:
             return f"{self.name} [bright_black]({self.config.hostname})[/bright_black]"
         return self.name
+
+    def isRunning(self) -> bool:
+        """Interface for running status getter"""
+        raise NotImplementedError
