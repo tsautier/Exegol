@@ -14,13 +14,13 @@ from docker.models.containers import Container
 from docker.types import Mount
 from rich.prompt import Prompt
 
-from exegol.console.cli.SyntaxFormat import SyntaxFormat
 from exegol.config.ConstantConfig import ConstantConfig
 from exegol.config.EnvInfo import EnvInfo
 from exegol.config.UserConfig import UserConfig
 from exegol.console.ConsoleFormat import boolFormatter, getColor
 from exegol.console.ExegolPrompt import Confirm
 from exegol.console.cli.ParametersManager import ParametersManager
+from exegol.console.cli.SyntaxFormat import SyntaxFormat
 from exegol.exceptions.ExegolExceptions import ProtocolNotSupported, CancelOperation
 from exegol.model.ExegolModules import ExegolModules
 from exegol.model.ExegolNetwork import ExegolNetwork, ExegolNetworkMode, DockerDrivers
@@ -889,10 +889,13 @@ class ContainerConfig:
                 logger.warning("Host mode cannot be set with NAT ports configured. Disabling the host network mode.")
                 net_mode = self.__fallback_network_mode
             if EnvInfo.isDockerDesktop():
-                logger.warning("Docker desktop (Windows & macOS) does not support sharing of host network interfaces.")
-                logger.verbose("Official doc: https://docs.docker.com/network/host/")
-                logger.info("To share network ports between the host and exegol, use the [bright_blue]--port[/bright_blue] parameter.")
-                net_mode = self.__fallback_network_mode
+                if not EnvInfo.isHostNetworkAvailable():
+                    logger.warning("Host network mode for Docker desktop (Windows & macOS) is not available.")
+                    logger.verbose("Official doc: https://docs.docker.com/network/drivers/host/#docker-desktop")
+                    logger.info("To share network ports between the host and exegol, use the [bright_blue]--port[/bright_blue] parameter.")
+                    net_mode = self.__fallback_network_mode
+                else:
+                    logger.warning("Docker desktop host network mode is enabled but in beta. Everything might not work as you expect.")
 
         self.__networks.clear()
         if type(net_mode) is str or net_mode != ExegolNetworkMode.disable:
