@@ -1,11 +1,15 @@
+import logging
+
 try:
     import docker
     import requests
     import git
 
     from exegol.utils.ExeLog import logger, ExeLog, console
+    from exegol.utils.DockerUtils import DockerUtils
     from exegol.console.cli.ParametersManager import ParametersManager
     from exegol.console.cli.actions.ExegolParameters import Command
+    from exegol.manager.ExegolManager import ExegolManager
 except ModuleNotFoundError as e:
     print("Mandatory dependencies are missing:", e)
     print("Please install them with python3 -m pip install --upgrade -r requirements.txt")
@@ -32,6 +36,9 @@ class ExegolController:
     def call_action(cls):
         """Dynamically retrieve the main function corresponding to the action selected by the user
         and execute it on the main thread"""
+        ExegolManager.print_version()
+        DockerUtils()  # Init dockerutils
+        ExegolManager.print_debug_banner()
         # Check for missing parameters
         missing_params = cls.__action.check_parameters()
         if len(missing_params) == 0:
@@ -64,8 +71,16 @@ def main():
         logger.info("Exiting")
     except git.exc.GitCommandError as git_error:
         print_exception_banner()
+        # Printing git stderr as raw to avoid any Rich parsing error
+        logger.debug("Full git output:")
+        logger.raw(git_error, level=logging.DEBUG)
+        logger.empty_line()
         error = git_error.stderr.strip().split(": ")[-1].strip("'")
-        logger.critical(f"A critical error occurred while running this git command: {' '.join(git_error.command)} => {error}")
+        logger.error("Git error received:")
+        # Printing git error as raw to avoid any Rich parsing error
+        logger.raw(error, level=logging.ERROR)
+        logger.empty_line()
+        logger.critical(f"A critical error occurred while running this git command: {' '.join(git_error.command)}")
     except Exception:
         print_exception_banner()
         console.print_exception(show_locals=True, suppress=[docker, requests, git])

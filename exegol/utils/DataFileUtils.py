@@ -97,8 +97,12 @@ class DataFileUtils:
                 logger.error("Error while parsing exegol config file ! Check for syntax error.")
             except JSONDecodeError:
                 logger.error(f"Error while parsing exegol data file {self._file_path} ! Check for syntax error.")
-        self._raw_data = data
-        self._process_data()
+        if data is None:
+            logger.warning(f"Exegol was unable to load the file {self._file_path}. Restoring it to its original state.")
+            self._create_config_file()
+        else:
+            self._raw_data = data
+            self._process_data()
 
     def __load_config(self, data: dict, config_name: str, default: Optional[Union[bool, str, int]],
                       choices: Optional[Set[str]] = None) -> Union[bool, str, int]:

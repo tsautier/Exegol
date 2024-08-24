@@ -14,7 +14,7 @@ from exegol.utils.NetworkUtils import NetworkUtils
 
 def ContainerCompleter(prefix: str, parsed_args: Namespace, **kwargs) -> Tuple[str, ...]:
     """Function to dynamically load a container list for CLI autocompletion purpose"""
-    data = [c.name for c in DockerUtils.listContainers()]
+    data = [c.name for c in DockerUtils().listContainers()]
     for obj in data:
         # filter data if needed
         if prefix and not obj.lower().startswith(prefix.lower()):

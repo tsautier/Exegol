@@ -73,10 +73,10 @@ class ExegolContainer(ExegolContainerTemplate, SelectableInterface):
         if status == "unknown":
             return "Unknown"
         elif status == "exited":
-            return "[red]Stopped"
+            return "[red]Stopped[/red]"
         elif status == "running":
-            return "[green]Running"
-        return status
+            return "[green]Running[/green]"
+        return f"[orange3]{status}[/orange3]"
 
     def isNew(self) -> bool:
         """Check if the container has just been created or not"""
@@ -112,7 +112,11 @@ class ExegolContainer(ExegolContainerTemplate, SelectableInterface):
         """
         with console.status(f"Waiting to start {self.name}", spinner_style="blue") as progress:
             start_date = datetime.utcnow()
-            self.__container.start()
+            try:
+                self.__container.start()
+            except APIError as e:
+                logger.debug(e)
+                logger.critical(f"Docker raise a critical error when starting the container [green]{self.name}[/green], error message is: {e.explanation}")
             if not self.config.legacy_entrypoint:  # TODO improve startup compatibility check
                 try:
                     # Try to find log / startup messages. Will time out after 2 seconds if the image don't support status update through container logs.
@@ -338,9 +342,9 @@ class ExegolContainer(ExegolContainerTemplate, SelectableInterface):
                 with console.status(f"Starting XQuartz...", spinner_style="blue"):
                     os.system(f"xhost + localhost > /dev/null")
             else:
-                logger.debug(f"Adding xhost ACL to local:{self.config.hostname}")
+                logger.debug(f"Adding xhost ACL to local:{self.config.getUsername()}")
                 # add linux local ACL
-                os.system(f"xhost +local:{self.config.hostname} > /dev/null")
+                os.system(f"xhost +local:{self.config.getUsername()} > /dev/null")
 
     def __updatePasswd(self):
         """

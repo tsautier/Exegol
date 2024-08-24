@@ -47,3 +47,6 @@ class ExegolContainerTemplate:
     def isRunning(self) -> bool:
         """Interface for running status getter"""
         raise NotImplementedError
+
+    def getTextStatus(self) -> str:
+        return ""
