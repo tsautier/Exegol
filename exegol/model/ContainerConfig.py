@@ -945,12 +945,10 @@ class ContainerConfig:
                 net_mode = self.__fallback_network_mode
             if EnvInfo.isDockerDesktop():
                 if not EnvInfo.isHostNetworkAvailable():
-                    logger.warning("Host network mode for Docker desktop (Windows & macOS) is not available.")
-                    logger.verbose("Official doc: https://docs.docker.com/network/drivers/host/#docker-desktop")
-                    logger.info("To share network ports between the host and exegol, use the [bright_blue]--port[/bright_blue] parameter.")
                     net_mode = self.__fallback_network_mode
                 else:
-                    logger.warning("Docker desktop host network mode is enabled but in beta. Everything might not work as you expect.")
+                    logger.warning("The network mode of the Docker desktop host has its limitations. It may not work as expected.")
+                    logger.verbose("More information from the official documentation of Docker Desktop: https://docs.docker.com/network/drivers/host/#docker-desktop")
 
         self.__networks.clear()
         if type(net_mode) is str or net_mode != ExegolNetworkMode.disable:

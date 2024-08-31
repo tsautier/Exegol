@@ -226,7 +226,15 @@ class EnvInfo:
         elif cls.isOrbstack():
             return True
         elif cls.isDockerDesktop():
-            res = cls.getDockerDesktopSettings().get('hostNetworkingEnabled', False)
+            res = cls.getDockerDesktopSettings().get('hostNetworkingEnabled')
+            if res is None:
+                logger.warning("Host network mode for Docker Desktop is not available, you need to upgrade Docker Desktop to enable it!")
+            elif not res:
+                logger.warning(
+                    "Docker desktop now supports host network mode. However, this mode is currently [red]disabled[/red]. You need to manually change the configuration in your Docker Desktop settings to support host network sharing with Exegol.")
+            if not res:
+                logger.info("To share network ports (without host network) between the host and exegol, use the [bright_blue]--port[/bright_blue] parameter.")
+                logger.verbose("Official doc: https://docs.docker.com/network/drivers/host/#docker-desktop")
             return res if res is not None else False
         logger.warning("Unknown or not supported environment for host network mode.")
         return False
