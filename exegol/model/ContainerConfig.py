@@ -26,7 +26,7 @@ from exegol.model.ExegolModules import ExegolModules
 from exegol.model.ExegolNetwork import ExegolNetwork, ExegolNetworkMode, DockerDrivers
 from exegol.utils import FsUtils
 from exegol.utils.ExeLog import logger, ExeLog
-from exegol.utils.FsUtils import check_sysctl_value
+from exegol.utils.FsUtils import check_sysctl_value, mkdir
 from exegol.utils.GuiUtils import GuiUtils
 
 if EnvInfo.is_windows_shell or EnvInfo.is_mac_shell:
@@ -116,8 +116,8 @@ class ContainerConfig:
         self.__labels: Dict[str, str] = {}
         self.__ports: Dict[str, Optional[Union[int, Tuple[str, int], List[Union[int, Tuple[str, int], Dict[str, Union[int, str]]]]]]] = {}
         self.__extra_host: Dict[str, str] = {}
-        self.interactive: bool = True
-        self.tty: bool = True
+        self.interactive: bool = False
+        self.tty: bool = False
         self.shm_size: str = self.__default_shm_size
         self.__workspace_custom_path: Optional[str] = None
         self.__workspace_dedicated_path: Optional[str] = None
@@ -577,7 +577,8 @@ class ContainerConfig:
                     raise CancelOperation
             except CancelOperation:
                 # Error during installation, skipping operation
-                logger.warning("Exegol resources have not been downloaded, the feature cannot be enabled")
+                if UserConfig().enable_exegol_resources:
+                    logger.warning("Exegol resources have not been downloaded, the feature cannot be enabled yet")
                 return False
             logger.verbose("Config: Enabling exegol resources volume")
             self.__exegol_resources = True
@@ -1151,7 +1152,7 @@ class ContainerConfig:
                     else:
                         # If the directory is created by exegol, bypass user preference and enable shared perms (if available)
                         execute_update_fs = force_sticky_group or enable_sticky_group
-                        path.mkdir(parents=True, exist_ok=True)
+                        mkdir(path)
             except PermissionError:
                 logger.error("Unable to create the volume folder on the filesystem locally.")
                 logger.critical(f"Insufficient permissions to create the folder: {host_path}")
