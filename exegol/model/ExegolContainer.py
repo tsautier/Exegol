@@ -233,7 +233,8 @@ class ExegolContainer(ExegolContainerTemplate, SelectableInterface):
         from exegol.utils.DockerUtils import DockerUtils
         for net in nets:
             if net.shouldBeRemoved():
-                DockerUtils.removeNetwork(net.getNetworkName())
+                logger.debug(f"Network {net.getNetworkName()} will be removed.")
+                DockerUtils().removeNetwork(net.getNetworkName())
 
     def __removeVolume(self):
         """Remove private workspace volume directory if exist"""

@@ -1522,7 +1522,7 @@ class ContainerConfig:
 
     def getTextNetworkMode(self) -> str:
         """Network mode, text getter"""
-        network_mode = ', '.join([n.getTextNetworkMode() for n in self.__networks]) if len(self.__networks) > 0 else ExegolNetworkMode.disable.name
+        network_mode = ', '.join([n.getTextNetworkMode() for n in self.__networks]) if len(self.__networks) > 0 else f"[bright_black]{ExegolNetworkMode.disable.value}[/bright_black]"
         if self.__vpn_path:
             network_mode += " (with VPN)"
         return network_mode

@@ -11,7 +11,7 @@ class DockerDrivers(Enum):
 
 class ExegolNetworkMode(Enum):
     """Enum for user display"""
-    disable = 'Disable'
+    disable = 'Disabled'
     host = 'Host'
     docker = 'Docker'
     nat = 'NAT'  # need pre-process
