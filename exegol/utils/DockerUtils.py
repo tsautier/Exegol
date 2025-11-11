@@ -60,7 +60,7 @@ class DockerUtils(metaclass=MetaSingleton):
                                 f"    Check documentation for help: https://docs.exegol.com/troubleshooting#unable-to-connect-to-docker")
             elif 'PermissionError' in str(err):
                 logger.critical(f"Docker is installed on your host but you don't have the permission to interact with it. Exiting.{os.linesep}"
-                                f"    Check documentation for help: https://docs.dev.exegol.com/first-install#_2-wrapper-install")
+                                f"    Check documentation for help: https://docs.exegol.com/first-install#_2-wrapper-install")
             else:
                 logger.error(err)
                 logger.critical(
