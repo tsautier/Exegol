@@ -162,7 +162,6 @@ owIDAQAB
                              options={"require": ["iat", "iss", "aud", "exp"], "verify_exp": False, "verify_iat": False},
                              audience="urn:exegol:wrapper",
                              issuer=self.__key_handler.getSubject(), )
-        logger.debug(f"Local session: {session}")
         self.__machine_id = session["machine_id"]
         self.__license_id = session["license_id"]
         self.__license_owner = session["license_owner"]
@@ -370,6 +369,11 @@ owIDAQAB
             logger.verbose(display)
         if self.__expiration_date is not None:
             logger.verbose(f"License valid until {self.__expiration_date}")
+
+    def display_support_info(self):
+        logger.verbose("Support information:")
+        logger.verbose(f"- Licence ID: {self.__license_id}")
+        logger.verbose(f"- Machine ID: {self.__machine_id}")
 
     def get_license_type_display(self) -> str:
         if self.__license is not None:
