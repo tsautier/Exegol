@@ -223,12 +223,14 @@ class ExegolManager:
     @classmethod
     async def activate(cls) -> None:
         """Activate an exegol license"""
+        licence_manager = await LicenseManager.get()
         if ParametersManager().revoke:
-            await (await LicenseManager.get()).revoke_exegol()
-        elif (await LicenseManager.get()).is_activated():
+            await licence_manager.revoke_exegol()
+        elif licence_manager.is_activated():
+            licence_manager.display_license()
             logger.success("Exegol is activated")
         else:
-            await (await LicenseManager.get()).activate_exegol(skip_prompt=True)
+            await licence_manager.activate_exegol(skip_prompt=True)
 
     @classmethod
     async def print_version(cls) -> None:
