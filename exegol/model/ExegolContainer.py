@@ -608,6 +608,11 @@ class ExegolContainer(ExegolContainerTemplate, SelectableInterface):
                 self.exec(f"cp -a /etc/hosts {self.BACKUP_DIRECTORY}/hosts", quiet=True, as_daemon=False),
                 self.exec(f"cp -a /etc/resolv.conf {self.BACKUP_DIRECTORY}/resolv.conf", quiet=True, as_daemon=False),
                 self.exec(f"cp -a /etc/proxychains.conf {self.BACKUP_DIRECTORY}/proxychains.conf", quiet=True, as_daemon=False),
+                self.exec(f"[ -f /opt/tools/Responder/Responder.db ] && ("
+                          f"cp -a /opt/tools/Responder/Responder.db {self.BACKUP_DIRECTORY}/Responder.db && "
+                          f"cp -a /opt/tools/Responder/Responder.conf {self.BACKUP_DIRECTORY}/Responder.conf && "
+                          f"cp -a /opt/tools/Responder/logs {self.BACKUP_DIRECTORY}/Responder_logs) || return 0", quiet=True, as_daemon=False),
+                self.exec(f"[ -d /root/.nxc ] && cp -a /root/.nxc {self.BACKUP_DIRECTORY}/nxc || return 0", quiet=True, as_daemon=False),
                 self.exec(f"triliumnext-stop && "
                           f"mkdir {self.BACKUP_DIRECTORY}/triliumnext_data && "
                           f"cp -a /opt/tools/triliumnext/data/document.db* {self.BACKUP_DIRECTORY}/triliumnext_data/ && "
@@ -641,7 +646,14 @@ class ExegolContainer(ExegolContainerTemplate, SelectableInterface):
                 self.exec(f"cat {self.BACKUP_DIRECTORY}/bash_history >> ~/.bash_history", quiet=True, as_daemon=False),
                 self.exec(f"cp -a {self.BACKUP_DIRECTORY}/hosts /etc/hosts", quiet=True, as_daemon=False),
                 self.exec(f"cp -a {self.BACKUP_DIRECTORY}/resolv.conf /etc/resolv.conf", quiet=True, as_daemon=False),
-                self.exec(f"mv {self.BACKUP_DIRECTORY}/proxychains.conf /etc/proxychains.conf ", quiet=True, as_daemon=False),
+                self.exec(f"mv {self.BACKUP_DIRECTORY}/proxychains.conf /etc/proxychains.conf", quiet=True, as_daemon=False),
+                self.exec(f"", quiet=True, as_daemon=False),
+                self.exec(f"[ -d {self.BACKUP_DIRECTORY}/nxc ] && ([ -d /root/.nxc ] && mv {self.BACKUP_DIRECTORY}/nxc/* /root/.nxc/ || mv {self.BACKUP_DIRECTORY}/nxc /root/.nxc) || return 0", quiet=True, as_daemon=False),
+                self.exec(f"[ -f {self.BACKUP_DIRECTORY}/Responder.db ] && ("
+                          f"mv {self.BACKUP_DIRECTORY}/Responder.db /opt/tools/Responder/Responder.db && "
+                          f"mv {self.BACKUP_DIRECTORY}/Responder.conf /opt/tools/Responder/Responder.conf && "
+                          f"mkdir -p /opt/tools/Responder/logs && "
+                          f"mv {self.BACKUP_DIRECTORY}/Responder_logs/* /opt/tools/Responder/logs/) || return 0", quiet=True, as_daemon=False),
                 self.exec(f"rm /opt/tools/triliumnext/data/document.db* && "
                           f"mv {self.BACKUP_DIRECTORY}/triliumnext_data/document.db* /opt/tools/triliumnext/data/ && "
                           f"mv {self.BACKUP_DIRECTORY}/triliumnext_data/session_secret.txt /opt/tools/triliumnext/data/session_secret.txt && "

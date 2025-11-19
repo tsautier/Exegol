@@ -675,8 +675,9 @@ class ExegolManager:
         backup_items = [
             "Your [green]my-resources[/green] customization" if c.config.isMyResourcesEnable() else "",
             "The container [green]/workspace[/green] directory",
-            "Your [green]bash/zsh[/green] command history",
+            "Your [green]bash[/green],[green]zsh[/green] command history",
             "Your [green]exegol-history[/green] database" if exh_backup_supported else "",
+            "Your [green]NetExec[/green],[green]Responder[/green] database and configuration",
             "Your [green]TriliumNext[/green] notes",
             "The following files: /etc/hosts /etc/resolv.conf /opt/tools/Exegol-history/profile.sh",
             "The following configurations: [green]Proxychains[/green]"
@@ -686,8 +687,7 @@ class ExegolManager:
     - {backup_text}
 """
         # TODO improve upgrade with
-        #  Config of: Responder?
-        #  DB of Responder, neo4j, postgres, nxc?, firefox, hashcat potfile, john?
+        #  DB of neo4j, postgres, firefox, hashcat potfile, john?
 
         logger.warning(details)
         if (not ParametersManager().force_mode and
