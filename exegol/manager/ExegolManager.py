@@ -493,7 +493,7 @@ class ExegolManager:
                 if container_tag is not None:
                     logger.warning(f"Container '{container_tag}' has not been found")
                 return [] if multiple else None
-            logger.info(f"Creating new container '{container_tag}'")
+            logger.info(f"Creating new container [green]{container_tag if container_tag else ''}[/green]")
             return await cls.__createContainer(container_tag)
         assert cls.__container is not None
         return cast(Union[Optional[ExegolContainer], List[ExegolContainer]], cls.__container)
