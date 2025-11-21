@@ -41,7 +41,7 @@ class LocalDatastore(metaclass=MetaSingleton):
         # Switch back to managed transaction mode
         try:
             # Python 3.12+ (PEP 249 compliant)
-            self.__db.autocommit = False
+            self.__db.autocommit = False  # type: ignore[attr-defined]
         except AttributeError:
             # Python < 3.12 (Legacy mode)
             self.__db.isolation_level = "IMMEDIATE"
