@@ -687,7 +687,7 @@ class ExegolManager:
     - {backup_text}
 """
         # TODO improve upgrade with
-        #  DB of neo4j, postgres, firefox, hashcat potfile, john?
+        #  DB of neo4j, postgres, firefox
 
         logger.warning(details)
         if (not ParametersManager().force_mode and
