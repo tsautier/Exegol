@@ -115,7 +115,10 @@ class SupabaseUtils:
         result = await supabase_client.invoke("licenses-endpoint", invoke_options=options)
         if type(result) is bytes:
             return {"result": result}
-        return result
+        elif type(result) is dict:
+            return result
+        logger.error(f"Received unexpected response type: {type(result)}")
+        raise NotImplementedError
 
     @classmethod
     async def __execute(cls, supabase_query: Union[AsyncFilterRequestBuilder, AsyncMaybeSingleRequestBuilder, AsyncSingleRequestBuilder, AsyncSelectRequestBuilder]) -> Optional[APIResponse]:
@@ -156,7 +159,8 @@ class SupabaseUtils:
             data: Dict[str, bytes] = await cls.__call_licenses_endpoint((await cls.__create_client()).functions, cls.LicenseAction.GetCertificate)
             cert = data.get("result")
             if cert is None:
-                raise FunctionsRelayError
+                logger.debug(f"Received data but without result: {data}")
+                raise FunctionsRelayError("Unknown error, result is missing")
             return cert
         except ConnectError as e:
             logger.critical("Exegol license server can't be reached without Internet access")
