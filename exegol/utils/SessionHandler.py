@@ -6,7 +6,7 @@ import jwt
 
 from exegol.config.ConstantConfig import ConstantConfig
 from exegol.console.ExegolPrompt import ExegolRich
-from exegol.exceptions.ExegolExceptions import CancelOperation, LicenseToleration, LicenseRevocation
+from exegol.exceptions.ExegolExceptions import CancelOperation, LicenseToleration, LicenseRevocation, UnavailableService
 from exegol.manager.TaskManager import TaskManager
 from exegol.model.LicensesTypes import LicenseType
 from exegol.utils.ExeLog import logger
@@ -91,6 +91,8 @@ owIDAQAB
             try:
                 new_session = await self.__refresh_session(token, muid)
                 return_queue.put((new_session, None))
+            except UnavailableService:
+                return_queue.put((None, LicenseToleration))
             except Exception as e:
                 return_queue.put((None, e))
             lock_path.unlink(missing_ok=True)
