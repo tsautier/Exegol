@@ -15,6 +15,15 @@ class ExeLog(logging.Logger):
     VERBOSE: int = 15
     ADVANCED: int = 13
 
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.__critical_method = "exit"
+
+    def setCriticalMethod(self, method: str) -> None:
+        if method not in ["exit", "raise"]:
+            raise ValueError(f"The critical method '{method}' is not supported. Choose between 'exit' or 'raise'.")
+        self.__critical_method = method
+
     @staticmethod
     def setVerbosity(verbose: int, quiet: bool = False) -> None:
         """Set logging level accordingly to the verbose count or with quiet enable."""
@@ -78,7 +87,10 @@ class ExeLog(logging.Logger):
         """Change default critical text format with rich color support
         Add auto exit."""
         super(ExeLog, self).critical("{}[!]{} {}".format("[bold red]", "[/bold red]", msg), *args, **kwargs)
-        exit(1)
+        if self.__critical_method == "exit":
+            exit(1)
+        else:
+            raise RuntimeError(msg)
 
     def success(self, msg: Any, *args: Any, **kwargs: Any) -> None:
         """Add success logging method with text format / rich color support"""
