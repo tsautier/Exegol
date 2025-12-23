@@ -25,7 +25,7 @@ classifiers = [
 keywords = ["pentest", "redteam", "ctf", "exegol"]
 
 # Starting support with python 3.9.2 because of the cryptography requirements
-requires-python = ">=3.9.2"
+requires-python = ">=3.10"
 
 dependencies = [
     "docker~=7.1.0",
@@ -48,15 +48,19 @@ dependencies = [
 dev = ["pre-commit"]
 testing = ["mypy", "types-PyYAML", "types-requests", "types-tzlocal", "types-python-dateutil", "pytest"]
 
+[project.optional-dependencies]
+mcp = [
+    "exegol-mcp~=1.0.0",
+]
+
 [project.scripts]
 exegol = "exegol.manager.ExegolController:main"
 
 [project.urls]
-Homepage = "https://exegol.readthedocs.io/"
-Documentation = "https://exegol.readthedocs.io/"
+Homepage = "https://exegol.com"
+Documentation = "https://docs.exegol.com"
 Repository = "https://github.com/ThePorgs/Exegol"
 Issues = "https://github.com/ThePorgs/Exegol/issues"
-Funding = "https://patreon.com/nwodtuhs"
 
 [tool.pdm]
 [tool.pdm.version]

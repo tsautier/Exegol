@@ -381,6 +381,7 @@ owIDAQAB
         logger.verbose("Support information:")
         logger.verbose(f"- Licence ID: {self.__license_id}")
         logger.verbose(f"- Machine ID: {self.__machine_id}")
+        logger.verbose(f"- Session expiration: {self.__session_expiration_date}")
 
     def get_license_type_display(self) -> str:
         if self.__license is not None:

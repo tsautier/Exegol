@@ -236,6 +236,18 @@ class ExegolContainer(ExegolContainerTemplate, SelectableInterface):
         #                                    environment=self.config.getShellEnvs())
         # logger.debug(result)
 
+    async def exec_raw(self, command: Union[str, Sequence[str]]) -> Tuple[int, str]:
+        """Execute a command / process on the docker container.
+        Return the exit code and the logs."""
+        if not self.isRunning():
+            await self.start()
+        exec_payload, str_cmd = ExegolContainer.formatShellCommand(command, quiet=True)
+        result = self.__container.exec_run(exec_payload, environment={"CMD": str_cmd, "DISABLE_AUTO_UPDATE": "true"}, detach=False, stream=False)
+        stdout = result.output.decode("utf-8") if type(result.output) is bytes else result.output
+        # result[0] : exit code
+        # result[1] : output
+        return result.exit_code, stdout
+
     async def exec(self, command: Union[str, Sequence[str]], as_daemon: bool = True, quiet: bool = False, is_tmp: bool = False, show_output: bool = True) -> int:
         """Execute a command / process on the docker container.
         Set as_daemon to not follow the command stream and detach the execution

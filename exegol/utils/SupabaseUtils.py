@@ -1,3 +1,4 @@
+from datetime import datetime
 import logging
 from enum import Enum
 from json import JSONDecodeError
@@ -324,6 +325,8 @@ class SupabaseUtils:
                 logger.critical("Your license does not allow you to download this image.")
             elif e.status == 500:
                 logger.critical("The Exegol servers are currently unavailable, please try again later.")
+            elif e.status == 498:
+                logger.critical(f"Exegol was unable to synchronize with the servers. Please check that your system's date and time are correct: {datetime.now()}")
             else:
                 logger.debug(f"Error code {e.status}")
                 logger.critical(f"An error occurred for registry access: {e.message}")
