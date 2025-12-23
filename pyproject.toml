@@ -52,11 +52,10 @@ testing = ["mypy", "types-PyYAML", "types-requests", "types-tzlocal", "types-pyt
 exegol = "exegol.manager.ExegolController:main"
 
 [project.urls]
-Homepage = "https://exegol.readthedocs.io/"
-Documentation = "https://exegol.readthedocs.io/"
+Homepage = "https://exegol.com"
+Documentation = "https://docs.exegol.com"
 Repository = "https://github.com/ThePorgs/Exegol"
 Issues = "https://github.com/ThePorgs/Exegol/issues"
-Funding = "https://patreon.com/nwodtuhs"
 
 [tool.pdm]
 [tool.pdm.version]

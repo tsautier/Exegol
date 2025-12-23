@@ -15,7 +15,7 @@ from exegol.console.cli.ParametersManager import ParametersManager
 from exegol.exceptions.ExegolExceptions import CancelOperation
 from exegol.manager.TaskManager import TaskManager
 from exegol.model.LicensesTypes import LicensesEnumeration, LicenseType, LicenseEnrollment, EnrollmentForm
-from exegol.utils.ExeLog import logger, console
+from exegol.utils.ExeLog import logger, ExeLog
 from exegol.utils.LocalDatastore import LocalDatastore
 from exegol.utils.MUID import MUID
 from exegol.utils.SessionHandler import SessionHandler
@@ -96,7 +96,7 @@ class LicenseManager:
             # Display EULA
             with open(ConstantConfig.eula_path, 'r') as f:
                 markdown = Markdown(f.read())
-            console.print(markdown)
+            ExeLog.console.print(markdown)
 
     async def enroll_machine(self) -> bool:
         # Login
