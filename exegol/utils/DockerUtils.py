@@ -724,11 +724,26 @@ class DockerUtils(metaclass=MetaSingleton):
                 return f"matching tag doesn't exist: {err.explanation}"
             else:
                 logger.debug(f"Error: {err}")
-                return f"en unknown error occurred while downloading this image : {err.explanation}"
+                return f"an unknown error occurred while downloading this image : {err.explanation}"
         except ReadTimeout:
             logger.critical(f"Received a timeout error, Docker is busy... Unable to download an image tag, retry later the following command:{os.linesep}"
                             f"    [orange3]docker pull --platform linux/{image.getArch()} {image.getRepository()}:{image.getLatestVersionName()}[/orange3].")
             return  # type: ignore
+
+    def createLocalLastestImageTag(self, image: ExegolImage) -> None:
+        """After installing a version-specific image, check if the latest tag already exists.
+        If not, add the latest tag to the local image to show the "update available" status"""
+        latest_local_image = self.__getImage(image.getFullVersionName())
+        if latest_local_image is None:
+            logger.critical(f"Unable to find locally the image {image.getFullVersionName()}.")
+            return
+        try:
+            self.__client.api.tag(latest_local_image.id, ConstantConfig.IMAGE_NAME, image.getName().split('-')[0])
+        except APIError as err:
+            logger.critical(f"An unknown error occurred while tagging the image as latest: {err.explanation}")
+        except ReadTimeout:
+            logger.critical(f"Received a timeout error, Docker is busy... Unable to download an image tag, retry later the following command:{os.linesep}"
+                            f"    [orange3]docker pull --platform linux/{image.getArch()} {image.getRepository()}:{image.getLatestVersionName()}[/orange3].")
 
     async def removeImage(self, image: ExegolImage, upgrade_mode: bool = False, silent_error: bool = False) -> bool:
         """Remove an ExegolImage from disk"""
