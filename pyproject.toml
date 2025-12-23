@@ -48,6 +48,11 @@ dependencies = [
 dev = ["pre-commit"]
 testing = ["mypy", "types-PyYAML", "types-requests", "types-tzlocal", "types-python-dateutil", "pytest"]
 
+[project.optional-dependencies]
+mcp = [
+    "exegol-mcp~=1.0.0",
+]
+
 [project.scripts]
 exegol = "exegol.manager.ExegolController:main"
 
