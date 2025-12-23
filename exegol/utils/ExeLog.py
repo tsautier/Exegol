@@ -15,6 +15,9 @@ class ExeLog(logging.Logger):
     VERBOSE: int = 15
     ADVANCED: int = 13
 
+    # Global rich console object
+    console: Console = Console()
+
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.__critical_method = "exit"
@@ -55,7 +58,8 @@ class ExeLog(logging.Logger):
             self._log(ExeLog.VERBOSE,
                       "{}[V]{} {}".format("[bold blue]", "[/bold blue]", msg), args, **kwargs)
 
-    def raw(self, msg: Any, level: int = VERBOSE, markup: bool = False, highlight: bool = False, emoji: bool = False, rich_parsing: bool = False) -> None:
+    def raw(self, msg: Any, level: int = VERBOSE, markup: bool = False, highlight: bool = False, emoji: bool = False,
+            rich_parsing: bool = False) -> None:
         """Add raw text logging, used for stream printing."""
         if rich_parsing:
             markup = True
@@ -65,7 +69,7 @@ class ExeLog(logging.Logger):
             if type(msg) is bytes:
                 msg = msg.decode('utf-8', errors="ignore")
             # Raw message are print directly to the console bypassing logging system and auto formatting
-            console.print(msg, end='', markup=markup, highlight=highlight, emoji=emoji)
+            self.console.print(msg, end='', markup=markup, highlight=highlight, emoji=emoji)
 
     def info(self, msg: Any, *args: Any, **kwargs: Any) -> None:
         """Change default info text format with rich color support"""
@@ -103,9 +107,6 @@ class ExeLog(logging.Logger):
         self.raw(os.linesep, level=log_level)
 
 
-# Global rich console object
-console: Console = Console()
-
 # Global console lock for thread-safe console operations
 ConsoleLock = asyncio.Lock()
 
@@ -125,7 +126,7 @@ logging.basicConfig(
                           markup=True,
                           show_level=False,
                           show_path=False,
-                          console=console)]
+                          console=ExeLog.console)]
 )
 
 # Global logger object

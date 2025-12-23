@@ -18,7 +18,7 @@ from exegol.model.ExegolContainerTemplate import ExegolContainerTemplate
 from exegol.model.ExegolImage import ExegolImage
 from exegol.model.LicensesTypes import LicensesEnumeration
 from exegol.model.SelectableInterface import SelectableInterface
-from exegol.utils.ExeLog import logger, console, ExeLog
+from exegol.utils.ExeLog import logger, ExeLog
 
 
 class ExegolTUI:
@@ -176,7 +176,7 @@ class ExegolTUI:
             else:
                 logger.error(f"Print table of {type(data[0])} is not implemented")
                 raise NotImplementedError
-        console.print(table)
+        ExeLog.console.print(table)
         logger.empty_line()
 
     @staticmethod
@@ -432,7 +432,7 @@ class ExegolTUI:
         recap = cls.__buildContainerRecapTable(container)
 
         logger.empty_line()
-        console.print(recap)
+        ExeLog.console.print(recap)
         logger.empty_line()
 
     @staticmethod
