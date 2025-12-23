@@ -109,4 +109,4 @@ The license is automatically terminated in case of violation of the stated terms
 
 ## 10. Governing law and jurisdiction
 
-This license is governed by French law. Any dispute relating to its interpretation or application shall be submitted to the exclusive jurisdiction of the courts of Paris. 
+This license is governed by French law. Any dispute relating to its interpretation or application shall be submitted to the exclusive jurisdiction of the courts of Paris.

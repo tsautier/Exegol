@@ -465,14 +465,14 @@ class DockerUtils(metaclass=MetaSingleton):
             result = [img for img in result if not img.isVersionSpecific() or img.isInstall()]
         return result
 
-    async def getOfficialImageFromList(self, tag: str) -> Union[ExegolImage, str]:
+    async def getOfficialImageFromList(self, tag: str) -> ExegolImage:
         """Get an ExegolImage from tag name."""
         # Fetch every official images available
         images = await self.listImages(include_version_tag=True, include_locked=True)
         match: Optional[ExegolImage] = None
         # image tag without version
         tag_only = tag.split('-')[0] if '-' in tag else None
-        tag_only_match = None
+        tag_only_match: Optional[ExegolImage] = None
         # Find a match
         for i in images:
             if i.getName() == tag:

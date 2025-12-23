@@ -68,7 +68,9 @@ class UpdateManager:
                 if selected_image.isVersionSpecific():
                     # Install latest tag if not already installed
                     try:
-                        await DockerUtils().getOfficialImageFromList(selected_image.getName().split('-')[0])
+                        result = await DockerUtils().getOfficialImageFromList(selected_image.getName().split('-')[0])
+                        if result is None or not result.isInstall():
+                            raise ObjectNotFound
                     except ObjectNotFound:
                         DockerUtils().createLocalLastestImageTag(selected_image)
                 elif selected_image.hasVersionTag():
